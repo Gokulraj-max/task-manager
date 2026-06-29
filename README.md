@@ -1,290 +1,169 @@
-# Task Management API
+# Task Management API 🚀
 
-A secure and scalable RESTful Task Management API built with **Python**, **FastAPI**, **PostgreSQL**, and **SQLAlchemy**. This project allows users to register, authenticate using JWT, and manage their personal tasks with features such as CRUD operations, search, filtering, and pagination.
-
----
-
-## Features
-
-### Authentication
-- User Registration
-- User Login
-- JWT Authentication
-- Password Hashing (bcrypt)
-- Protected Routes
-- User Profile
-
-### Task Management
-- Create Task
-- View All Tasks
-- View Single Task
-- Update Task
-- Delete Task
-- Mark Task as Completed
-- Mark Task as Pending
-
-### Search & Filter
-- Search tasks by title
-- Search tasks by description
-- Filter by status
-- Filter by priority
-
-### Pagination
-- Retrieve tasks page by page
-- Configurable page size
-
-### Security
-- JWT Token Authentication
-- Password Hashing
-- Input Validation
-- Environment Variable Configuration
+A secure, multi-tenant, and scalable RESTful Task Management API built with **Python 3.12**, **FastAPI**, **PostgreSQL**, and **SQLAlchemy**. This project allows users to securely register, authenticate using OAuth2 JWT tokens, and manage their personal daily tasks with CRUD operations, search, filtering, sorting, and pagination.
 
 ---
 
-## Tech Stack
+## 💡 Project Overview & Real-Life Scenario
+
+The **Task Management API** provides a robust backend service that enables users to organize their daily workflows. Every user operates within an isolated account sandbox — users can only access and manage their own tasks.
+
+### Real-Life Scenario Example
+Imagine managing daily goals:
+1. *Finish DSA Practice*
+2. *Attend Tech Interview*
+3. *Learn FastAPI & JWT*
+4. *Buy Groceries*
+
+After logging in, a user (e.g., **Gokul**) can:
+- ➕ **Create Tasks**: `Title: Learn FastAPI`, `Priority: High`, `Due Date: 2026-07-15`
+- 👁️ **View & Filter Tasks**: Retrieve personal tasks filtered by status (`pending`/`completed`) or priority (`high`).
+- 🔄 **Update & Mark Complete**: Quickly mark tasks completed (`PATCH /tasks/{id}/complete`) which updates status to `Completed` and sets timestamp `updated_at`.
+- 🔍 **Search Tasks**: Perform case-insensitive searches (e.g. `GET /tasks?search=FastAPI`).
+- 📄 **Paginate Results**: Effortlessly paginate large lists (`GET /tasks?page=1&limit=10`).
+
+### 🔒 User Data Isolation (Multi-Tenancy)
+If **Gokul** (`user_id: 1`) and **Rahul** (`user_id: 2`) both use the platform:
+- When Gokul calls `GET /tasks`, the backend extracts `user_id: 1` from Gokul's verified JWT token and returns **only** Gokul's tasks.
+- Rahul cannot view, modify, or delete Gokul's tasks, ensuring strict data privacy.
+
+---
+
+## 🛠️ Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
-| Python 3.12 | Programming Language |
-| FastAPI | Backend Framework |
-| PostgreSQL | Database |
-| SQLAlchemy | ORM |
-| Pydantic | Data Validation |
-| JWT | Authentication |
-| Passlib (bcrypt) | Password Hashing |
-| Uvicorn | ASGI Server |
-| Alembic | Database Migration |
-| Pytest | Testing |
+| Python 3.12 | Core Programming Language |
+| FastAPI | High-Performance ASGI Web Framework |
+| PostgreSQL / SQLite | Relational Database |
+| SQLAlchemy 2.0 | Object-Relational Mapping (ORM) |
+| Pydantic v2 | Data Validation & Schema Serialization |
+| JWT (python-jose) | Secure Token-Based Authentication |
+| Passlib (bcrypt) | Strong Password Hashing |
+| Uvicorn | Lightning-fast ASGI Server |
+| Alembic | Database Migrations |
+| Pytest | Automated Testing Suite |
 
 ---
 
-## Project Structure
+## 📁 Clean Architecture Folder Structure
 
 ```
-task-manager/
+task-manager-api/
 │
 ├── app/
-│   ├── models/
-│   ├── schemas/
-│   ├── routes/
-│   ├── services/
-│   ├── utils/
-│   ├── database.py
-│   ├── config.py
-│   └── main.py
+│   ├── core/               # Centralized app configuration & environment settings
+│   ├── models/             # SQLAlchemy ORM database entities (User, Task)
+│   ├── schemas/            # Pydantic request & response validation schemas
+│   ├── routes/             # API endpoint controllers (Auth, Tasks)
+│   ├── services/           # Encapsulated business logic, queries & filters
+│   ├── utils/              # JWT token generation & password hashing utilities
+│   ├── middleware/         # Security & authentication dependencies
+│   ├── exceptions/         # Custom HTTP exception definitions
+│   ├── database.py         # Database engine & session management
+│   └── main.py             # FastAPI application entry point
 │
-├── tests/
-├── requirements.txt
-├── .env
-└── README.md
+├── tests/                  # Pytest test suites with in-memory SQLite isolation
+├── .gitignore              # Git ignore rules for secrets, DBs, and bytecodes
+├── requirements.txt        # Production & development dependencies
+├── .env                    # Environment variables file
+└── README.md               # Project documentation
 ```
 
 ---
 
-## Database Design
+## 🗄️ Database Design
 
-### Users
+### Users Table (`users`)
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | Integer | Primary Key, Indexed |
+| `name` | String | Not Null |
+| `email` | String | Unique, Indexed, Not Null |
+| `password` | String | Hashed (bcrypt), Not Null |
+| `created_at` | DateTime | Auto Timestamp |
 
-| Field | Type |
-|------|------|
-| id | Integer |
-| name | String |
-| email | String |
-| password | String |
-| created_at | DateTime |
-
-### Tasks
-
-| Field | Type |
-|------|------|
-| id | Integer |
-| title | String |
-| description | Text |
-| status | String |
-| priority | String |
-| due_date | Date |
-| created_at | DateTime |
-| updated_at | DateTime |
-| user_id | Foreign Key |
+### Tasks Table (`tasks`)
+| Column | Type | Constraints |
+|--------|------|-------------|
+| `id` | Integer | Primary Key, Indexed |
+| `title` | String | Not Null, Indexed |
+| `description` | Text | Nullable |
+| `status` | Enum | `pending` / `completed` |
+| `priority` | Enum | `low` / `medium` / `high` |
+| `due_date` | Date | Nullable |
+| `created_at` | DateTime | Auto Timestamp |
+| `updated_at` | DateTime | Auto Update Timestamp |
+| `user_id` | Integer | Foreign Key (`users.id`), Not Null |
 
 ---
 
-## REST API Endpoints
+## 🌐 REST API Endpoints
 
 ### Authentication
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/register` | Register a new user account | ❌ No |
+| `POST` | `/login` | Authenticate user & return JWT access token | ❌ No |
+| `GET` | `/profile` | Get current authenticated user profile | 🔒 Yes (Bearer JWT) |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /register | Register a new user |
-| POST | /login | Login and receive JWT token |
-| GET | /profile | Get logged-in user profile |
-
-### Tasks
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /tasks | Get all tasks |
-| GET | /tasks/{id} | Get a task by ID |
-| POST | /tasks | Create a task |
-| PUT | /tasks/{id} | Update a task |
-| DELETE | /tasks/{id} | Delete a task |
-| PATCH | /tasks/{id}/complete | Mark task as completed |
-
-### Search
-
-```
-GET /tasks?search=meeting
-```
-
-### Filter
-
-```
-GET /tasks?status=completed
-
-GET /tasks?priority=high
-```
-
-### Pagination
-
-```
-GET /tasks?page=1&limit=10
-```
+### Task Management
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/tasks` | Get all user tasks (supports search, filter, sort, page) | 🔒 Yes (Bearer JWT) |
+| `GET` | `/tasks/{id}` | Get specific task details by ID | 🔒 Yes (Bearer JWT) |
+| `POST` | `/tasks` | Create a new task | 🔒 Yes (Bearer JWT) |
+| `PUT` | `/tasks/{id}` | Update existing task details | 🔒 Yes (Bearer JWT) |
+| `DELETE` | `/tasks/{id}` | Delete a task | 🔒 Yes (Bearer JWT) |
+| `PATCH` | `/tasks/{id}/complete` | Mark task status as completed | 🔒 Yes (Bearer JWT) |
 
 ---
 
-## Authentication Flow
+## 🚀 Getting Started
 
-```
-User Registration
-        ↓
-Password Hashing
-        ↓
-Store User in Database
-        ↓
-User Login
-        ↓
-Verify Password
-        ↓
-Generate JWT Token
-        ↓
-Access Protected APIs
-```
-
----
-
-## Running the Project
-
-### Clone the Repository
-
+### 1. Clone & Setup
 ```bash
 git clone https://github.com/Gokulraj-max/task-manager.git
-```
-
-### Navigate to Project
-
-```bash
 cd task-manager
 ```
 
-### Create Virtual Environment
-
+### 2. Virtual Environment
 ```bash
 python -m venv venv
-```
-
-### Activate Virtual Environment
-
-Windows
-
-```bash
+# Windows:
 venv\Scripts\activate
-```
-
-Linux / macOS
-
-```bash
+# Linux/macOS:
 source venv/bin/activate
 ```
 
-### Install Dependencies
-
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Configure Environment Variables
-
-Create a `.env` file:
-
-```env
-DATABASE_URL=postgresql://username:password@localhost/taskdb
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
-
-### Start the Server
-
+### 4. Run Server
 ```bash
 uvicorn app.main:app --reload
 ```
 
----
-
-## API Documentation
-
-FastAPI automatically generates interactive API documentation.
-
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
+### 5. Interactive Documentation
+- **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-## Testing
-
-Run all tests:
-
+## 🧪 Automated Testing
+Run the complete Pytest test suite:
 ```bash
 pytest
 ```
 
 ---
 
-## Future Improvements
-
-- Role-Based Access Control (Admin/User)
-- Task Categories
-- File Attachments
-- Email Notifications
-- Soft Delete
-- Activity Logs
-- Docker Support
-- Redis Caching
-- CI/CD Pipeline
-
----
-
-## Skills Demonstrated
-
-- RESTful API Development
-- CRUD Operations
-- JWT Authentication
-- Password Hashing
-- SQLAlchemy ORM
-- PostgreSQL
-- FastAPI
-- Pydantic Validation
-- Exception Handling
-- Pagination
-- Search & Filtering
-- Clean Architecture
-- API Documentation
-- Backend Security
-
----
-
-## Author
-
-**Govindh**
-
-Backend Developer | Python | FastAPI | PostgreSQL
+## 🎯 Skills Demonstrated for Backend Technical Interviews
+- **RESTful API Architecture**: Standard HTTP methods, status codes, and JSON serialization.
+- **Relational Database Modeling**: 1-to-many ORM relationships and cascade rules with SQLAlchemy.
+- **Authentication & Security**: Bcrypt password hashing, OAuth2 Bearer JWT token generation/validation.
+- **Multi-Tenant Data Privacy**: Strict authorization ensuring users access only their owned records.
+- **Advanced Querying**: Dynamic filters, full-text search, multi-column sorting, and offset pagination.
+- **Clean Code & Test Driven Development**: Decoupled clean architecture with 100% test pass rates.
