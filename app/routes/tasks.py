@@ -13,8 +13,8 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 @router.get("", response_model=TaskPaginatedResponse)
 def get_all_tasks(
     search: Optional[str] = Query(None, description="Search term for title or description"),
-    status_filter: Optional[TaskStatus] = Query(None, alias="status", description="Filter tasks by status"),
-    priority_filter: Optional[TaskPriority] = Query(None, alias="priority", description="Filter tasks by priority"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Filter tasks by status"),
+    priority_filter: Optional[str] = Query(None, alias="priority", description="Filter tasks by priority"),
     sort: Optional[str] = Query("created_at", description="Sort by field: due_date, created_at, title, priority, status"),
     order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
     page: int = Query(1, ge=1, description="Page number"),
@@ -22,12 +22,29 @@ def get_all_tasks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    # Sanitize empty strings sent by query params to None
+    clean_search = search if search and search.strip() != "" else None
+    
+    clean_status = None
+    if status_filter and status_filter.strip() != "":
+        try:
+            clean_status = TaskStatus(status_filter.strip())
+        except ValueError:
+            clean_status = None
+
+    clean_priority = None
+    if priority_filter and priority_filter.strip() != "":
+        try:
+            clean_priority = TaskPriority(priority_filter.strip())
+        except ValueError:
+            clean_priority = None
+
     return task_service.get_tasks(
         user_id=current_user.id,
         db=db,
-        search=search,
-        status_filter=status_filter,
-        priority_filter=priority_filter,
+        search=clean_search,
+        status_filter=clean_status,
+        priority_filter=clean_priority,
         sort=sort,
         order=order,
         page=page,

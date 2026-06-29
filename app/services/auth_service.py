@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin
+from app.schemas.user import UserCreate, UserLogin, UserUpdate
 from app.utils.hashing import hash_password, verify_password
 from app.utils.jwt import create_access_token
 from app.exceptions import UserAlreadyExistsException, InvalidCredentialsException
@@ -28,3 +28,16 @@ def authenticate_user(login_data: UserLogin, db: Session) -> dict:
     
     access_token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": access_token, "token_type": "bearer"}
+
+def update_user_profile(user: User, update_data: UserUpdate, db: Session) -> User:
+    if update_data.name is not None:
+        user.name = update_data.name
+    if update_data.email is not None and update_data.email != user.email:
+        existing = db.query(User).filter(User.email == update_data.email).first()
+        if existing:
+            raise UserAlreadyExistsException(email=update_data.email)
+        user.email = update_data.email
+
+    db.commit()
+    db.refresh(user)
+    return user

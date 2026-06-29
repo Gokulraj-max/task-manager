@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
-from app.services.auth_service import register_user, authenticate_user
+from app.schemas.user import UserCreate, UserLogin, UserUpdate, UserResponse, Token
+from app.services.auth_service import register_user, authenticate_user, update_user_profile
 from app.middleware.auth import get_current_user
 from app.models.user import User
 
@@ -19,3 +19,11 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/profile", response_model=UserResponse)
 def get_profile(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.put("/profile", response_model=UserResponse)
+def update_profile(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return update_user_profile(user=current_user, update_data=update_data, db=db)

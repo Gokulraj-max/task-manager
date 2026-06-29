@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.database import engine, Base
 from app.routes import auth, tasks
@@ -25,8 +28,16 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(tasks.router)
 
-@app.get("/", tags=["Root"])
-def root():
+# Mount static files directory
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+@app.get("/", tags=["UI Root"])
+def read_root():
+    index_path = os.path.join(static_dir, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return {
         "message": "Welcome to the Task Management REST API",
         "documentation": "/docs",

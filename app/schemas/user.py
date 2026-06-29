@@ -11,6 +11,10 @@ class UserLogin(BaseModel):
     email: EmailStr = Field(..., description="Registered email address")
     password: str = Field(..., description="User password")
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=2, max_length=100, description="Updated user name")
+    email: Optional[EmailStr] = Field(None, description="Updated email address")
+
 class UserResponse(BaseModel):
     id: int
     name: str

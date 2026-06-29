@@ -1,12 +1,12 @@
 # Task Management API 🚀
 
-A secure, multi-tenant, and scalable RESTful Task Management API built with **Python 3.12**, **FastAPI**, **PostgreSQL**, and **SQLAlchemy**. This project allows users to securely register, authenticate using OAuth2 JWT tokens, and manage their personal daily tasks with CRUD operations, search, filtering, sorting, and pagination.
+A secure, multi-tenant, and scalable RESTful Task Management API built with **Python 3.12**, **FastAPI**, **PostgreSQL**, **SQLAlchemy**, and **React (Vite)**. This project allows users to securely register, authenticate using OAuth2 JWT tokens, manage personal tasks, and edit user profile details.
 
 ---
 
 ## 💡 Project Overview & Real-Life Scenario
 
-The **Task Management API** provides a robust backend service that enables users to organize their daily workflows. Every user operates within an isolated account sandbox — users can only access and manage their own tasks.
+The **Task Management API** provides a robust backend and frontend service that enables users to organize their daily workflows. Every user operates within an isolated account sandbox — users can only access and manage their own tasks.
 
 ### Real-Life Scenario Example
 Imagine managing daily goals:
@@ -19,6 +19,7 @@ After logging in, a user (e.g., **Gokul**) can:
 - ➕ **Create Tasks**: `Title: Learn FastAPI`, `Priority: High`, `Due Date: 2026-07-15`
 - 👁️ **View & Filter Tasks**: Retrieve personal tasks filtered by status (`pending`/`completed`) or priority (`high`).
 - 🔄 **Update & Mark Complete**: Quickly mark tasks completed (`PATCH /tasks/{id}/complete`) which updates status to `Completed` and sets timestamp `updated_at`.
+- ✏️ **Edit Profile**: Update account details such as user name (`PUT /profile`).
 - 🔍 **Search Tasks**: Perform case-insensitive searches (e.g. `GET /tasks?search=FastAPI`).
 - 📄 **Paginate Results**: Effortlessly paginate large lists (`GET /tasks?page=1&limit=10`).
 
@@ -35,13 +36,14 @@ If **Gokul** (`user_id: 1`) and **Rahul** (`user_id: 2`) both use the platform:
 |------------|---------|
 | Python 3.12 | Core Programming Language |
 | FastAPI | High-Performance ASGI Web Framework |
+| React 18 & Vite | Modern Frontend Framework & Build Tool |
+| Axios | Promise-based HTTP Client for Browser |
 | PostgreSQL / SQLite | Relational Database |
 | SQLAlchemy 2.0 | Object-Relational Mapping (ORM) |
 | Pydantic v2 | Data Validation & Schema Serialization |
 | JWT (python-jose) | Secure Token-Based Authentication |
 | Passlib (bcrypt) | Strong Password Hashing |
 | Uvicorn | Lightning-fast ASGI Server |
-| Alembic | Database Migrations |
 | Pytest | Automated Testing Suite |
 
 ---
@@ -63,11 +65,21 @@ task-manager-api/
 │   ├── database.py         # Database engine & session management
 │   └── main.py             # FastAPI application entry point
 │
+├── frontend/               # React + Vite Single Page Application
+│   ├── src/
+│   │   ├── pages/          # Login, Register, Dashboard, Profile pages
+│   │   ├── components/     # Navbar, Sidebar, TaskCard, TaskForm, SearchBar, Pagination
+│   │   ├── services/       # Axios API client instance with JWT interceptor
+│   │   ├── hooks/          # Custom useTasks data hook
+│   │   └── context/        # Global AuthContext provider
+│   ├── package.json
+│   └── vite.config.js
+│
 ├── tests/                  # Pytest test suites with in-memory SQLite isolation
 ├── .gitignore              # Git ignore rules for secrets, DBs, and bytecodes
-├── requirements.txt        # Production & development dependencies
+├── requirements.txt        # Backend dependencies
 ├── .env                    # Environment variables file
-└── README.md               # Project documentation
+└── README.md               # Complete project documentation
 ```
 
 ---
@@ -100,12 +112,13 @@ task-manager-api/
 
 ## 🌐 REST API Endpoints
 
-### Authentication
+### Authentication & Profile
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | `POST` | `/register` | Register a new user account | ❌ No |
 | `POST` | `/login` | Authenticate user & return JWT access token | ❌ No |
 | `GET` | `/profile` | Get current authenticated user profile | 🔒 Yes (Bearer JWT) |
+| `PUT` | `/profile` | Update current user profile details (e.g. name) | 🔒 Yes (Bearer JWT) |
 
 ### Task Management
 | Method | Endpoint | Description | Auth Required |
@@ -119,36 +132,30 @@ task-manager-api/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Running the Project
 
-### 1. Clone & Setup
+### 1. Start FastAPI Backend Server
 ```bash
-git clone https://github.com/Gokulraj-max/task-manager.git
-cd task-manager
-```
-
-### 2. Virtual Environment
-```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
+# Install Python packages
 pip install -r requirements.txt
-```
 
-### 4. Run Server
-```bash
+# Launch Uvicorn server
 uvicorn app.main:app --reload
 ```
+- Interactive API Docs: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### 5. Interactive Documentation
-- **Swagger UI**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc**: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+### 2. Start React Frontend Server
+```bash
+# Navigate to frontend
+cd frontend
+
+# Install Node packages
+npm install
+
+# Launch Vite dev server
+npm run dev
+```
+- React Web App UI: [http://localhost:3000](http://localhost:3000)
 
 ---
 
@@ -157,13 +164,3 @@ Run the complete Pytest test suite:
 ```bash
 pytest
 ```
-
----
-
-## 🎯 Skills Demonstrated for Backend Technical Interviews
-- **RESTful API Architecture**: Standard HTTP methods, status codes, and JSON serialization.
-- **Relational Database Modeling**: 1-to-many ORM relationships and cascade rules with SQLAlchemy.
-- **Authentication & Security**: Bcrypt password hashing, OAuth2 Bearer JWT token generation/validation.
-- **Multi-Tenant Data Privacy**: Strict authorization ensuring users access only their owned records.
-- **Advanced Querying**: Dynamic filters, full-text search, multi-column sorting, and offset pagination.
-- **Clean Code & Test Driven Development**: Decoupled clean architecture with 100% test pass rates.
