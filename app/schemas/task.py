@@ -1,17 +1,17 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime, date
 from typing import Optional, List
 from app.models.task import TaskStatus, TaskPriority
 
 class TaskCreate(BaseModel):
-    title: str
-    description: Optional[str] = None
+    title: str = Field(..., min_length=1, max_length=200, description="Task title is required")
+    description: Optional[str] = Field(None, description="Optional task detailed description")
     status: Optional[TaskStatus] = TaskStatus.PENDING
     priority: Optional[TaskPriority] = TaskPriority.MEDIUM
     due_date: Optional[date] = None
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
     priority: Optional[TaskPriority] = None
